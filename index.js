@@ -8,8 +8,8 @@ keypress(process.stdin);
 process.stdin.setRawMode(true);
 process.stdin.resume();
 
-var maxSpeed = 200; //0-255 value, 255 is currently fast for the bot
-var speedDifferential = 50; //amount to change speed when a single degree of turn is required to find the line
+var maxSpeed = 80; //0-255 value, 255 is currently fast for the bot
+var speedDifferential = 40;
 
 var middleThreshold = 550;
 var leftThreshold = 440;
@@ -47,7 +47,7 @@ board.on("ready", function() {
 	led.on();
 
 	leftMotor = new five.Motor({
-		pins: [6, 5],
+		pins: [10, 9],
 		invertPWM: true
 	});
 
@@ -58,17 +58,17 @@ board.on("ready", function() {
 
 	var photoResistorRight = five.Sensor({
 		pin: "A2",
-		freq: 10
+		freq: 5
 	});
 
 	var photoResistorMiddle = five.Sensor({
 		pin: "A1",
-		freq: 10
+		freq: 5
 	});
 
 	var photoResistorLeft = five.Sensor({
 		pin: "A0",
-		freq: 10
+		freq: 5
 	});
 
 	lineSensors.left = new LineSensor({
@@ -175,31 +175,32 @@ function processLineSensors() {
 	else if (!lineSensors.left.onLine && lineSensors.middle.onLine && lineSensors.right.onLine) {
 		console.log("trailing to the right");
 
-		leftMotor.forward(maxSpeed);
-		rightMotor.forward(maxSpeed - speedDifferential);
+		rightMotor.reverse(maxSpeed);
+		rightMotor.reverse(maxSpeed);
 	}
 	else if (!lineSensors.left.onLine && !lineSensors.middle.onLine && lineSensors.right.onLine) {
 		console.log("trailing HARD to the right");
 
 		leftMotor.forward(maxSpeed);
-		rightMotor.reverse(maxSpeed);
+		rightMotor.reverse(maxSpeed + speedDifferential);
 	}
 	else if (lineSensors.left.onLine && lineSensors.middle.onLine && !lineSensors.right.onLine) {
 		console.log("trailing to the left");
 
-		leftMotor.forward(maxSpeed - speedDifferential);
+		leftMotor.reverse(maxSpeed);
 		rightMotor.forward(maxSpeed);
 	}
 	else if (lineSensors.left.onLine && !lineSensors.middle.onLine && !lineSensors.right.onLine) {
 		console.log("trailing HARD to the left");
 
-		leftMotor.reverse(maxSpeed);
+		leftMotor.reverse(maxSpeed + speedDifferential);
 		rightMotor.forward(maxSpeed);
 	}
 	else {
 		console.log("lost the line");
 
 		//this state means we don't know where the line is at all, we need to stop.
+		//alternatively we could try searching for the line and if found continue
 		leftMotor.stop();
 		rightMotor.stop();
 	}
